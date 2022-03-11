@@ -13,25 +13,25 @@
 %define LETTER_F      'F'
 %define BUFF_MAX_SIZE  0xB0
 
-        GLOBAL _start
+        ;; GLOBAL _start
 
 ;; There can be stored some data used for my printf function
 
-        SECTION .data
+        ;; SECTION .data
 
-Msg1:   db "Tilted to do anything school related", 0x00
+;; Msg1:   db "Tilted to do anything school related", 0x00
 
-Msg:
-        db "%s My %x str %x ing12 %x fuck my life", 0x0A
-        db 0x00
+;; Msg:
+;;         db "%s My %x str %x ing12 %x fuck my life", 0x0A
+;;         db 0x00
 
         SECTION .bss
 
 Buff:   resb 0x100
 
-        SECTION .text
+        SECTION .code
 
-_start:
+;; _start:
 
 ;; "%d...%o tilt %s %%", arg1, arg2, arg3                                  |  empty  |
 ;; ^------------------------------------------------------------------     -----------
@@ -49,21 +49,23 @@ _start:
      ;; push rdi
      ;; push rax
 
-        push 0x12345
-        push 0xABCD
-        push 0xDDDDD
-        push Msg1
-        push Msg
+        ;; push 0x12345
+        ;; push 0xABCD
+        ;; push 0xDDDDD
+        ;; push Msg1
+        ;; push Msg
 
-        call printf
+        ;; call printf
 
 
-        mov rax, 0x3C               ; rax = 0x3c Terminate Function
-        xor rdi, rdi                ; rdi = 0
+        ;; mov rax, 0x3C               ; rax = 0x3c Terminate Function
+        ;; xor rdi, rdi                ; rdi = 0
 
-        syscall
+        ;; syscall
 
 printf:
+
+        xor r9, r9
 
         pop  rax
         pop  rsi                ; getting string address
@@ -105,6 +107,7 @@ printf:
 
 .jumptable:
 
+        inc r9
         sub al, 'a'
 
         cmp al, n_cases
@@ -140,6 +143,7 @@ printf:
         call clearbuff
 
 .ret:
+        mov rax, r9
 
         pop  rbp
         ret
@@ -433,7 +437,7 @@ binary:
         ret
 ;------------------------------------------------
 
-        SECTION .data
+        ;; SECTION .data
 
 SWITCH_TABLE:
     dq my_default
