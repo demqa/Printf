@@ -48,11 +48,13 @@ _start:
      ;; push rsi
      ;; push rdi
      ;; push rax
+
         push 0x12345
         push 0xABCD
         push 0xDDDDD
         push Msg1
         push Msg
+
         call printf
 
 
@@ -193,6 +195,8 @@ char:
 ;------------------------------------------------
 string:
 
+        mov r8, rsi
+
         cld
         mov rsi, rbx
 
@@ -204,7 +208,6 @@ string:
         je  .ret
 
         stosb
-
         inc cx
 
         cmp cx, BUFF_MAX_SIZE
@@ -213,7 +216,9 @@ string:
         call clearbuff
         jmp .loop
 
+
 .ret:
+        mov rsi, r8
         ret
 ;------------------------------------------------
 
