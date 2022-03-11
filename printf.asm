@@ -2,24 +2,27 @@
 ;; x86-64
 ;; (C) Demqa Alexeev
 
-%define n_cases  26
-%define TEN      10
-%define MINUS    '-'
-%define ZERO     '0'
-%define ONE      '1'
-%define SEVEN    '7'
-%define NINE     '9'
-%define LETTER_A 'A'
-%define LETTER_F 'F'
+%define n_cases        25
+%define TEN            10
+%define MINUS         '-'
+%define ZERO          '0'
+%define ONE           '1'
+%define SEVEN         '7'
+%define NINE          '9'
+%define LETTER_A      'A'
+%define LETTER_F      'F'
+%define BUFF_MAX_SIZE  0xB0
 
         GLOBAL _start
 
-        SECTION .data
-
 ;; There can be stored some data used for my printf function
 
+        SECTION .data
+
+Msg1:   db "Tilted to do anything school related", 0x00
+
 Msg:
-        db "My string12 %%", 0x0A
+        db "%s My %x str %x ing12 %x fuck my life", 0x0A
         db 0x00
 
         SECTION .bss
@@ -45,7 +48,10 @@ _start:
      ;; push rsi
      ;; push rdi
      ;; push rax
-        push 12345
+        push 0x12345
+        push 0xABCD
+        push 0xDDDDD
+        push Msg1
         push Msg
         call printf
 
@@ -57,11 +63,14 @@ _start:
 
 printf:
 
+        pop  rax
+        pop  rsi                ; getting string address
+        push rax
+
         push rbp
         mov  rbp, rsp
 
         cld
-        mov  rsi, [rbp + 16]
         mov  rdi, Buff
         xor  rax, rax
         xor   cx, cx
@@ -70,7 +79,7 @@ printf:
         cmp  cx, 0xB0
         jb   .resume
 
-        call .clearbuff
+        call clearbuff
 
 .resume:
 
@@ -97,13 +106,20 @@ printf:
         sub al, 'a'
 
         cmp al, n_cases
-        jbe .loop
+        jae .loop
 
 ;;      There I have to hand over somehow arguement (lol it is just the last pushed item)
 ;;      BUT   I have to remenber that fact, there goes call, so I have to get the second pushed item...
 
-        mov  rbx, [SWITCH_TABLE + 8 * rax]
-        call rbx
+        mov  rdx, [SWITCH_TABLE + 8 * rax]
+
+        pop  rax                ; saving    rbp
+        pop  r9                 ; saving    ret address
+        pop  rbx                ; putting argument in rbx                       ;
+        push r9                 ; restoring ret address
+        push rax                ; restoring rbp
+
+        call rdx                ; calling func from jumptable
 
         jmp .loop
 
@@ -119,15 +135,14 @@ printf:
 
 .print:
 
-        call .clearbuff
+        call clearbuff
 
 .ret:
 
         pop  rbp
         ret
 
-
-.clearbuff:
+clearbuff:
 
         push rsi
         push rdi
@@ -164,27 +179,52 @@ my_default:
 ;------------------------------------------------
 char:
 
+        mov [rdi], bl
+        inc  rdi
+        inc  cx
+
         ret
+;------------------------------------------------
 
 ;------------------------------------------------
 ; Entry:
-;
+; RBX - address of string
 ; Destr:
 ;------------------------------------------------
 string:
 
+        cld
+        mov rsi, rbx
+
+.loop:
+
+        lodsb
+
+        cmp al, 0
+        je  .ret
+
+        stosb
+
+        inc cx
+
+        cmp cx, BUFF_MAX_SIZE
+        jbe .loop
+
+        call clearbuff
+        jmp .loop
+
+.ret:
         ret
+;------------------------------------------------
 
 ;------------------------------------------------
 ; Entry:
 ; RDI - destination index
-; Destr: RAX, RBX, RCX, RDX
+; Destr: RAX, RBX, RCX, RDX, R8
 ;------------------------------------------------
 decimal:
 
-        pop  rbx
-
-        mov  rcx, TEN
+        mov  r8, TEN
 
         cmp  rbx, 0h
         push rdi
@@ -203,7 +243,7 @@ decimal:
         xor rdx, rdx
 
         mov rax, rbx    ; ax = N
-        div rcx         ; ax = N / 10
+        div r8          ; ax = N / 10
 
         mov rbx, rax    ; saving next integer
 
@@ -212,12 +252,15 @@ decimal:
         add al, ZERO
 
         stosb
+        inc  cx
 
         cmp rbx, 0h
         jne .proceed
 
-
         pop rbx
+
+        mov r8, rdi
+
         sub rdi, 1
 
 .reverse:
@@ -231,6 +274,8 @@ decimal:
 
         cmp rbx, rdi
         jb .reverse
+
+        mov rdi, r8
 
         ret
 ;------------------------------------------------
@@ -262,12 +307,15 @@ hex:
         add al, ZERO
 
         stosb
+        inc cx
 
         shr rbx, 4h
         jnz .proceed
 
 
         mov rbx, rdx
+        mov  r8, rdi
+
         sub rdi, 1
 
 .reverse:
@@ -281,6 +329,8 @@ hex:
 
         cmp rbx, rdi
         jb .reverse
+
+        mov rdi, r8
 
         ret
 ;------------------------------------------------
@@ -305,12 +355,14 @@ octal:
         add al, ZERO
 
         stosb
+        inc cx
 
         shr rbx, 1h
         jnz .proceed
 
 
         mov rbx, rdx
+        mov  r8, rdi
         sub rdi, 1
 
 .reverse:
@@ -324,6 +376,8 @@ octal:
 
         cmp rbx, rdi
         jb .reverse
+
+        mov rdi, r8
 
         ret
 ;------------------------------------------------
@@ -348,11 +402,13 @@ binary:
         add al, ZERO
 
         stosb
+        inc cx
 
         shr rbx, 1h
         jnz .proceed
 
         mov rbx, rdx
+        mov  r8, rdi
         sub rdi, 1
 
 .reverse:
@@ -366,6 +422,8 @@ binary:
 
         cmp rbx, rdi
         jb .reverse
+
+        mov rdi, r8
 
         ret
 ;------------------------------------------------
