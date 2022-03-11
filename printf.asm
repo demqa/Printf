@@ -19,7 +19,7 @@
 ;; There can be stored some data used for my printf function
 
 Msg:
-        db "My string12", 0x0A
+        db "My string12 %%", 0x0A
         db 0x00
 
         SECTION .bss
@@ -45,6 +45,7 @@ _start:
      ;; push rsi
      ;; push rdi
      ;; push rax
+        push 12345
         push Msg
         call printf
 
@@ -62,10 +63,11 @@ printf:
         cld
         mov  rsi, [rbp + 16]
         mov  rdi, Buff
-        xor  cx, cx
+        xor  rax, rax
+        xor   cx, cx
 
 .loop:
-        cmp  cx, 0x100
+        cmp  cx, 0xB0
         jb   .resume
 
         call .clearbuff
@@ -93,11 +95,15 @@ printf:
 .jumptable:
 
         sub al, 'a'
+
         cmp al, n_cases
+        jbe .loop
 
-        jng .loop
+;;      There I have to hand over somehow arguement (lol it is just the last pushed item)
+;;      BUT   I have to remenber that fact, there goes call, so I have to get the second pushed item...
 
-        call my_default
+        mov  rbx, [SWITCH_TABLE + 8 * rax]
+        call rbx
 
         jmp .loop
 
@@ -153,11 +159,30 @@ my_default:
 
 ;------------------------------------------------
 ; Entry:
+;
+; Destr:
+;------------------------------------------------
+char:
+
+        ret
+
+;------------------------------------------------
+; Entry:
+;
+; Destr:
+;------------------------------------------------
+string:
+
+        ret
+
+;------------------------------------------------
+; Entry:
 ; RDI - destination index
-; RBX - input integer
-; Destr: RAX, RDX, RCX
+; Destr: RAX, RBX, RCX, RDX
 ;------------------------------------------------
 decimal:
+
+        pop  rbx
 
         mov  rcx, TEN
 
@@ -178,7 +203,7 @@ decimal:
         xor rdx, rdx
 
         mov rax, rbx    ; ax = N
-        div rcx       ; ax = N / 10
+        div rcx         ; ax = N / 10
 
         mov rbx, rax    ; saving next integer
 
@@ -347,7 +372,7 @@ binary:
 
         SECTION .data
 
-.SWITCH_TABLE:
+SWITCH_TABLE:
     dq my_default
     dq binary
     dq char
