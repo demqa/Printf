@@ -34,31 +34,15 @@ Buff:   resb 0x100
 
 _start:
 
-;; "%d...%o tilt %s %%", arg1, arg2, arg3                                  |  empty  |
-;; ^------------------------------------------------------------------     -----------
-;; Last arguement is a string address, which is formatted like this --|    |str addr |  <-- stack_top
-;; and string ending with 0x00 symbol. Then goes arg1, arg2, arg3...       -----------
-;;                                                                         |  arg1   |
-;;                                                                         -----------
-;;                                                                         |  arg2   |
-;;                                                                         -----------
-;;                                                                         |next args|
-;;                                                                         -----------
-;;                                                                         |  .....  |
-
-     ;; push rsi
-     ;; push rdi
-     ;; push rax
-
         push 255
         push 33
         push 100
-        push 3802
-        push Msg1
-        push '!'
-        push 8
-        push 3802
-        push Msg
+        mov  r9,  3802
+        mov  r8,  Msg1
+        mov  rcx, '!'
+        mov  rdx,  8
+        mov  rsi,  3802
+        mov  rdi, Msg
 
         call printf
 
@@ -68,22 +52,51 @@ _start:
 
         syscall
 
-printf:
+;; Now I want to use SYSTEM V
+;;              1    2    3    4    5   6
+;; PARAMETERS: RDI, RSI, RDX, RCX, R8, R9
+;; AND FURTHER VALUES ARE PASSED IN STACK IN REVERSE ORDER (7th on the top and there we go...)
+;;
+;; +--------------+--------------+--------------+------------+
+;; | Callee saved | Caller saved | Return Value | parameters |
+;; |--------------+--------------+--------------+------------|
+;; |     RBX      |     R10      |     RAX      |    RDI     |
+;; |     RBP      |     R11      |              |    RSI     |
+;; |     R12      |              |              |    RDX     |
+;; |     R13      |              |              |    RCX     |
+;; |     R14      |              |              |    R8      |
+;; |     R15      |              |              |    R9      |
+;; +--------------+--------------+--------------+------------+
+;;
+;; CALLER PUSHES & POPS PARAMETERS
 
-        pop  rax
-        pop  rsi                ; getting string address
-        push rax
+printf:
 
         push rbp
         mov  rbp, rsp
 
         cld
-        mov  rdi, Buff
-        xor  rax, rax
-        xor   cx, cx
+
+        push r9
+        push r8
+        push rcx
+        push rdx
+        push rsi
+
+        push rbx                ; saving used register
+
+        sub  rbp, 56            ; moving rbp that way
+                                ; that [rbp - 16] will
+                                ; be next parameter
+
+        xchg rsi, rdi           ; <----- it is mov rsi, rdi
+        mov  rdi, Buff          ; xchg because it is 1 byte
+
+        xor  r9,  r9
+        xor  r10, r10
 
 .loop:
-        cmp  cx, 0xB0
+        cmp  r10, BUFF_MAX_SIZE
         jb   .resume
 
         call clearbuff
@@ -104,7 +117,7 @@ printf:
         jne  .jumptable
 
         stosb
-        inc cx
+        inc r10
 
         jmp .loop
 
@@ -120,11 +133,17 @@ printf:
 
         mov  rdx, [SWITCH_TABLE + 8 * rax]
 
-        pop  rax                ; saving    rbp
-        pop  r9                 ; saving    ret address
-        pop  rbx                ; putting argument in rbx                       ;
-        push r9                 ; restoring ret address
-        push rax                ; restoring rbp
+        cmp  r9, 5              ; checking if parameters > than 5
+        jne .normal             ; then i should shift rbp on minus 16
+
+        add rbp, 16
+
+.normal:
+
+        inc r9                  ; number of parameters printed in this moment
+
+        mov  rbx, [rbp + 16]
+        add  rbp, 8
 
         call rdx                ; calling func from jumptable
 
@@ -135,7 +154,7 @@ printf:
         cmp al, 0x00
         je .print
 
-        inc cx
+        inc r10
         stosb
 
         jmp .loop
@@ -146,7 +165,13 @@ printf:
 
 .ret:
 
-        pop  rbp
+        pop rbx                 ; restoring rbx
+
+        add rsp, 40             ; remove helping values
+
+        mov rax, r9             ; number of arguements printed successfully
+
+        pop rbp
         ret
 
 clearbuff:
@@ -155,23 +180,24 @@ clearbuff:
         push rdi
         push rdx
         push rax
+        push rcx
 
         mov  rax, 0x01
         mov  rdi, 1
 
         mov  rsi, Buff
-        xor  rdx, rdx
-        mov   dx,  cx
+        mov  rdx, r10
 
         syscall
 
+        pop  rcx
         pop  rax
         pop  rdx
         pop  rdi
         pop  rsi
 
         mov  rdi, Buff
-        mov   cx, 0
+        mov  r10, 0
 
         ret
 
@@ -188,7 +214,7 @@ char:
 
         mov [rdi], bl
         inc  rdi
-        inc  cx
+        inc  r10
 
         ret
 ;------------------------------------------------
@@ -213,9 +239,9 @@ string:
         je  .ret
 
         stosb
-        inc cx
+        inc r10
 
-        cmp cx, BUFF_MAX_SIZE
+        cmp r10, BUFF_MAX_SIZE
         jbe .loop
 
         call clearbuff
@@ -262,7 +288,7 @@ decimal:
         add al, ZERO
 
         stosb
-        inc  cx
+        inc r10
 
         cmp rbx, 0h
         jne .proceed
@@ -317,7 +343,7 @@ hex:
         add al, ZERO
 
         stosb
-        inc cx
+        inc r10
 
         shr rbx, 4h
         jnz .proceed
@@ -365,7 +391,7 @@ octal:
         add al, ZERO
 
         stosb
-        inc cx
+        inc r10
 
         shr rbx, 1h
         jnz .proceed
@@ -412,7 +438,7 @@ binary:
         add al, ZERO
 
         stosb
-        inc cx
+        inc r10
 
         shr rbx, 1h
         jnz .proceed
