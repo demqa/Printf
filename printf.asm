@@ -19,10 +19,11 @@
 
         SECTION .data
 
-Msg1:   db "Tilted to do anything school related", 0x00
+Msg1:   db "love", 0x00
 
 Msg:
-        db "%s My %x str %x ing12 %x fuck my life", 0x0A
+        db "I love %x na %b%%%c", 0x0A
+        db "I %s %x na %d%%%c%b", 0x0A
         db 0x00
 
         SECTION .bss
@@ -49,10 +50,14 @@ _start:
      ;; push rdi
      ;; push rax
 
-        push 0x12345
-        push 0xABCD
-        push 0xDDDDD
+        push 255
+        push 33
+        push 100
+        push 3802
         push Msg1
+        push '!'
+        push 8
+        push 3802
         push Msg
 
         call printf

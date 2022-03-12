@@ -1,16 +1,19 @@
-# Printf
+### Printf
 
-## There are supported printf modifiers:
+### There are supported printf modifiers:
+*%c* ,*%s*, *%d*, *%x*, *%o*, *%b*, *%%*
 
-### %c
 
-### %s
+#### Compiling:
+*x86-64*
+```
+nasm -f elf64 printf.asm
+ld -s -o printf printf.o
+```
 
-### %d
+#### Start:
+```
+./printf
+```
 
-### %x
-
-### %o
-
-### %b
 
