@@ -34,24 +34,6 @@ Buff:   resb 0x100
 
 _start:
 
-        push 255
-        push 33
-        push 100
-        mov  r9,  3802
-        mov  r8,  Msg1
-        mov  rcx, '!'
-        mov  rdx,  8
-        mov  rsi,  3802
-        mov  rdi, Msg
-
-        call printf
-
-
-        mov rax, 0x3C               ; rax = 0x3c Terminate Function
-        xor rdi, rdi                ; rdi = 0
-
-        syscall
-
 ;; Now I want to use SYSTEM V
 ;;              1    2    3    4    5   6
 ;; PARAMETERS: RDI, RSI, RDX, RCX, R8, R9
@@ -69,6 +51,24 @@ _start:
 ;; +--------------+--------------+--------------+------------+
 ;;
 ;; CALLER PUSHES & POPS PARAMETERS
+
+        push 255
+        push 33
+        push 100
+        mov  r9,  3802
+        mov  r8,  Msg1
+        mov  rcx, '!'
+        mov  rdx,  8
+        mov  rsi,  3802
+        mov  rdi, Msg
+
+        call printf
+
+
+        mov rax, 0x3C           ; rax = 0x3c Terminate Function
+        xor rdi, rdi            ; rdi = 0
+
+        syscall
 
 printf:
 
@@ -142,8 +142,8 @@ printf:
 
         inc r9                  ; number of parameters printed in this moment
 
-        mov  rbx, [rbp + 16]
-        add  rbp, 8
+        mov  rbx, [rbp + 16]    ; taking the next parameter
+        add  rbp, 8             ; move the pointer on the next
 
         call rdx                ; calling func from jumptable
 
@@ -161,7 +161,7 @@ printf:
 
 .print:
 
-        call clearbuff
+        call clearbuff          ; exit print
 
 .ret:
 
