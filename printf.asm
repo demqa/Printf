@@ -13,18 +13,7 @@
 %define LETTER_F      'F'
 %define BUFF_MAX_SIZE  0xB0
 
-        GLOBAL _start
-
 ;; There can be stored some data used for my printf function
-
-        SECTION .data
-
-Msg1:   db "love", 0x00
-
-Msg:
-        db "I love %x na %b%%%c", 0x0A
-        db "I %s %x na %d%%%c%b", 0x0A
-        db 0x00
 
         SECTION .bss
 
@@ -32,9 +21,8 @@ Buff:   resb 0x100
 
         SECTION .text
 
-_start:
 
-;; Now I want to use SYSTEM V
+;; I'm usign System V calling convention
 ;;              1    2    3    4    5   6
 ;; PARAMETERS: RDI, RSI, RDX, RCX, R8, R9
 ;; AND FURTHER VALUES ARE PASSED IN STACK IN REVERSE ORDER (7th on the top and there we go...)
@@ -52,25 +40,8 @@ _start:
 ;;
 ;; CALLER PUSHES & POPS PARAMETERS
 
-        push 255
-        push 33
-        push 100
-        mov  r9,  3802
-        mov  r8,  Msg1
-        mov  rcx, '!'
-        mov  rdx,  8
-        mov  rsi,  3802
-        mov  rdi, Msg
 
-        call printf
-
-
-        mov rax, 0x3C           ; rax = 0x3c Terminate Function
-        xor rdi, rdi            ; rdi = 0
-
-        syscall
-
-printf:
+RTprintf:
 
         push rbp
         mov  rbp, rsp
@@ -202,6 +173,8 @@ clearbuff:
         ret
 
 my_default:
+
+        ;; There I have to say user that there was an error...
 
         ret
 
