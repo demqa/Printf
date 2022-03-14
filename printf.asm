@@ -11,9 +11,16 @@
 %define NINE          '9'
 %define LETTER_A      'A'
 %define LETTER_F      'F'
+
 %define BUFF_MAX_SIZE  0xB0
 
 ;; There can be stored some data used for my printf function
+
+
+        EXTERN main
+        GLOBAL _start
+        GLOBAL RTprintf
+
 
         SECTION .bss
 
@@ -21,6 +28,13 @@ Buff:   resb 0x100
 
         SECTION .text
 
+
+_start:
+        call main
+
+        mov rax, 0x3C           ; Terminate Function 0x3C
+        xor rdi, rdi
+        syscall
 
 ;; I'm usign System V calling convention
 ;;              1    2    3    4    5   6
