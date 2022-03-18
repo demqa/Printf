@@ -1,5 +1,5 @@
 
-extern int RTprintf(const char *string, ...);
+extern "C" int RTprintf(const char *string, ...);
 
 int main()
 {

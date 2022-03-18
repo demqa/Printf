@@ -451,17 +451,32 @@ binary:
         ret
 ;------------------------------------------------
 
-        SECTION .data
+
 
 SWITCH_TABLE:
-    dq my_default
-    dq binary
-    dq char
-    dq decimal
-    dq 10 dup (my_default)
-    dq octal
-    dq 3  dup (my_default)
-    dq string
-    dq 4  dup (my_default)
-    dq hex
-    dq 2  dup (my_default)
+    dq my_default        ; a
+    dq binary            ; b
+    dq char              ; c
+    dq decimal           ; d
+    dq my_default        ; e
+    dq my_default        ; f
+    dq my_default        ; g
+    dq my_default        ; h
+    dq my_default        ; i
+    dq my_default        ; j
+    dq my_default        ; k
+    dq my_default        ; l
+    dq my_default        ; m
+    dq my_default        ; n
+    dq octal             ; o
+    dq my_default        ; p
+    dq my_default        ; q
+    dq my_default        ; r
+    dq string            ; s
+    dq my_default        ; t
+    dq my_default        ; u
+    dq my_default        ; v
+    dq my_default        ; w
+    dq hex               ; x
+    dq my_default        ; y
+    dq my_default        ; z
