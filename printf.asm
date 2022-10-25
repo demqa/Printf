@@ -28,6 +28,11 @@ Buff:   resb 0x100
 
         SECTION .text
 
+        ;; now i want to leave this code alone
+
+
+
+
 
 _start:
         call main
